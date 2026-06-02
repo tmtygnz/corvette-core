@@ -1,4 +1,4 @@
-package recordingprotocol
+package capture
 
 import (
 	"fmt"
