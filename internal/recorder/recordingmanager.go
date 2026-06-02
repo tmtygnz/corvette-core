@@ -4,6 +4,7 @@ import (
 	"corvette/internal/cameras"
 	"corvette/internal/configs"
 	recordingprotocol "corvette/internal/recorder/protocol"
+	"log"
 )
 
 type RecordingManager struct {
@@ -27,10 +28,21 @@ func CreateRecordingManager(rawCameras []configs.Cameras) *RecordingManager {
 func getCameraType(rawCameras []configs.Cameras) []cameras.Camera {
 	var cameraInstances []cameras.Camera
 	for _, camera := range rawCameras {
+		setupFolderForCamera(camera.Name)
 		newCamInstance := cameras.CreateNewCameraFromConfig(camera)
 		cameraInstances = append(cameraInstances, newCamInstance)
 	}
 	return cameraInstances
+}
+
+func setupFolderForCamera(cameraName string) {
+	if FolderExist(cameraName) {
+		log.Printf("Folder for %s camera exists.", cameraName)
+		return
+	} else {
+		log.Printf("Folder for %s camera DOES NOT exists. Creating one.", cameraName)
+		SetupCameraFolder(cameraName)
+	}
 }
 
 func mapReecorder(camera cameras.Camera) Recorder {

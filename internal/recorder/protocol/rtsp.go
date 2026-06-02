@@ -14,6 +14,7 @@ type RtspFFMPEGRecorder struct {
 }
 
 func CreateNewRtspRecorder(URL string, Name string) *RtspFFMPEGRecorder {
+	log.Printf("New recorder for: %s at %s", Name, URL)
 	return &RtspFFMPEGRecorder{
 		URL,
 		Name,
@@ -42,6 +43,9 @@ func (rfg *RtspFFMPEGRecorder) StartStream() error {
 		"-strftime", "1",
 		dirPath,
 	)
+
+	rfg.Cmd.Stdout = os.Stdout
+	rfg.Cmd.Stderr = os.Stderr
 
 	if err := rfg.Cmd.Run(); err != nil {
 		return ErrFailedToStartCamera

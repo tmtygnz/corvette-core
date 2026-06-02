@@ -11,9 +11,14 @@ type GenericIPCamera struct {
 	Password string
 	Endpoint string
 	Name     string
+	URL      string
 }
 
 func (gipc *GenericIPCamera) GetStreamUrl() string {
+	if gipc.URL != "" {
+		return gipc.URL
+	}
+
 	return fmt.Sprintf("rtsp://%s:%s@%s:%d/%s", gipc.User, gipc.Password, gipc.IP, gipc.Port, gipc.Endpoint)
 }
 

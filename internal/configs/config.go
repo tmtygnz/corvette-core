@@ -1,8 +1,10 @@
 package configs
 
 type Config struct {
-	Cameras  []Cameras
-	Password string
+	Cameras       []Cameras
+	Password      string
+	Onnxlibpath   string
+	Onnxmodelpath string
 }
 
 type Cameras struct {
@@ -13,4 +15,5 @@ type Cameras struct {
 	Port     int
 	Name     string
 	Type     string
+	Url      string
 }

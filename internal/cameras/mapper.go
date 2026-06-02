@@ -12,6 +12,7 @@ func CreateNewCameraFromConfig(conf configs.Cameras) Camera {
 			Password: conf.Password,
 			Endpoint: conf.Endpoint,
 			Name:     conf.Name,
+			URL:      conf.Url,
 		}
 	default:
 		return nil
