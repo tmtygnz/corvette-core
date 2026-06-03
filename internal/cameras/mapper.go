@@ -2,7 +2,7 @@ package cameras
 
 import "corvette/internal/configs"
 
-func CreateNewCameraFromConfig(configCameras []configs.Cameras) []Camera {
+func CreateNewCameraFromConfig(configCameras []configs.Camera) []Camera {
 	var cameras []Camera
 	for _, confCam := range configCameras {
 		switch confCam.Type {
@@ -14,7 +14,7 @@ func CreateNewCameraFromConfig(configCameras []configs.Cameras) []Camera {
 				Password: confCam.Password,
 				Endpoint: confCam.Endpoint,
 				Name:     confCam.Name,
-				URL:      confCam.Url,
+				URL:      confCam.URL,
 			}
 			cameras = append(cameras, genericCamera)
 		}

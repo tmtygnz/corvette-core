@@ -1,7 +1,6 @@
 package capture
 
 import (
-	"io"
 	"log"
 )
 
@@ -9,8 +8,10 @@ type Capturer interface {
 	StartRecorder() error
 	StopRecorder()
 
-	StartAIStreamer() (io.ReadCloser, error)
+	StartAIStreamer() error
 	StopAIStreamer()
+
+	GetCurrentAIFrame() ([]byte, bool)
 }
 
 func setupFolderForCapturer(cameraName string) {

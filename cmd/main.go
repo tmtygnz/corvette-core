@@ -16,13 +16,15 @@ const (
 func main() {
 	config := configs.ReadConfig()
 
-	inference.NewModelInstance(config.Onnxlibpath, config.Onnxmodelpath)
-
 	cameras := cameras.CreateNewCameraFromConfig(config.Cameras)
 	capturers := capture.CreateCameraCapturer(cameras)
 
 	recManager := recorder.CreateRecordingManager(capturers)
 	recManager.StartAllRecording()
+
+	aiManager := inference.CreateInferenceManager(config, capturers)
+	aiManager.StartAllHandlers()
+
 	defer recManager.StopAllRecording()
 
 	select {}

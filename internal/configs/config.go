@@ -1,19 +1,21 @@
 package configs
 
 type Config struct {
-	Cameras       []Cameras
-	Password      string
-	Onnxlibpath   string
-	Onnxmodelpath string
+	Cameras         []Camera `toml:"cameras"`
+	Password        string   `toml:"password"`
+	OnnxLibPath     string   `toml:"onnx_lib_path"`
+	OnnxModelPath   string   `toml:"onnx_model_path"`
+	AiScalingWidth  int      `toml:"ai_scaling_width"`
+	AiScalingHeight int      `toml:"ai_scaling_height"`
 }
 
-type Cameras struct {
-	IP       string
-	User     string
-	Password string
-	Endpoint string
-	Port     int
-	Name     string
-	Type     string
-	Url      string
+type Camera struct {
+	IP       string `toml:"ip"`
+	User     string `toml:"user"`
+	Password string `toml:"password"`
+	Endpoint string `toml:"endpoint"`
+	Port     int    `toml:"port"`
+	Name     string `toml:"name"`
+	Type     string `toml:"type"`
+	URL      string `toml:"url"`
 }

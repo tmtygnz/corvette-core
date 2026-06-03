@@ -17,11 +17,13 @@ func CreateRecordingManager(rawCameras []capture.Capturer) *RecordingManager {
 func (rm *RecordingManager) StartAllRecording() {
 	for _, capturer := range rm.capturers {
 		go capturer.StartRecorder()
+		go capturer.StartAIStreamer()
 	}
 }
 
 func (rm *RecordingManager) StopAllRecording() {
 	for _, capturer := range rm.capturers {
 		go capturer.StopRecorder()
+		go capturer.StopAIStreamer()
 	}
 }
