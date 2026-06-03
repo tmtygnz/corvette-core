@@ -23,21 +23,6 @@ func NewModelInstance(dllPath string, onnxModelPath string) *ModelInstance {
 		log.Panic("Failed to initialize onnx env.", err)
 	}
 
-	opts, err := onnxruntime_go.NewSessionOptions()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer opts.Destroy()
-
-	err = opts.AppendExecutionProviderOpenVINO(
-		map[string]string{
-			"device_type": "CPU",
-		},
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	inputShape := onnxruntime_go.NewShape(1, 3, 640, 640)
 	inputTensor, _ := onnxruntime_go.NewEmptyTensor[float32](inputShape)
 

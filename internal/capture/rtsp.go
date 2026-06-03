@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sync"
 )
 
 type CreateNewGenericCapturerOpts struct {
@@ -31,6 +32,7 @@ type RtspCapturer struct {
 	scalingWidth  int
 	scalingHeight int
 
+	mu     sync.Mutex
 	recCmd *exec.Cmd
 	aiCmd  *exec.Cmd
 }
@@ -55,6 +57,9 @@ func CreateNewCapturer(opts CreateNewGenericCapturerOpts) (*RtspCapturer, error)
 }
 
 func (rfg *RtspCapturer) StartRecorder() error {
+	rfg.mu.Lock()
+	defer rfg.mu.Unlock()
+
 	log.Printf("Camera streaming started for: %s\n", rfg.Name)
 	dirPath := fmt.Sprintf("recordings/%s/", rfg.Name) + "out_%Y-%m-%d_%H-%M-%S.mp4"
 
@@ -76,6 +81,7 @@ func (rfg *RtspCapturer) StartRecorder() error {
 	rfg.recCmd.Stderr = os.Stderr
 
 	if err := rfg.recCmd.Start(); err != nil {
+		rfg.recCmd = nil
 		return ErrFailedToStartCamera
 	}
 
@@ -83,16 +89,33 @@ func (rfg *RtspCapturer) StartRecorder() error {
 }
 
 func (rfg *RtspCapturer) StopRecorder() {
-	log.Printf("Stopping recorder for %s", rfg.Name)
+	rfg.mu.Lock()
+	defer rfg.mu.Unlock()
+
 	if rfg.recCmd == nil {
-		log.Printf("Tried to stop %s but stream does not exist.", rfg.Name)
+		log.Printf("Tried to stop %s recoreder but it is not running.")
 		return
 	}
 	rfg.recCmd.Process.Signal(os.Interrupt)
+
+	if rfg.recCmd.Process != nil {
+		rfg.recCmd.Process.Signal(os.Interrupt)
+		rfg.recCmd.Wait()
+	}
+
+	rfg.recCmd = nil
 }
 
 func (rfg *RtspCapturer) StartAIStreamer() error {
-	log.Printf("AI streaming started for: %s\n", rfg.Name)
+	rfg.mu.Lock()
+	defer rfg.mu.Unlock()
+
+	if rfg.aiCmd != nil {
+		log.Printf("AI Streamer already running for %s", rfg.Name)
+		return nil
+	}
+
+	log.Printf("Starting AI streamer for %s", rfg.Name)
 
 	rfg.aiCmd = exec.Command(
 		"ffmpeg",
@@ -108,11 +131,13 @@ func (rfg *RtspCapturer) StartAIStreamer() error {
 
 	stdoutPipe, err := rfg.aiCmd.StdoutPipe()
 	if err != nil {
+		rfg.aiCmd = nil
 		return ErrStdOutError
 	}
 
 	rfg.aiCmd.Stderr = os.Stderr
 	if err := rfg.aiCmd.Start(); err != nil {
+		rfg.aiCmd = nil
 		return ErrFailedToStartCamera
 	}
 
@@ -123,9 +148,8 @@ func (rfg *RtspCapturer) StartAIStreamer() error {
 
 func (rfg *RtspCapturer) frameToChan(stdout io.ReadCloser) error {
 	defer rfg.aiCmd.Wait()
-
+	frameBuffer := make([]byte, rfg.FrameSize)
 	for {
-		frameBuffer := make([]byte, rfg.FrameSize)
 		_, err := io.ReadFull(stdout, frameBuffer)
 		if err != nil {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
@@ -134,12 +158,27 @@ func (rfg *RtspCapturer) frameToChan(stdout io.ReadCloser) error {
 				log.Printf("Error reading frame for %s", rfg.Name)
 			}
 		}
-		rfg.AiFrame <- frameBuffer
+
+		select {
+		case rfg.AiFrame <- frameBuffer:
+			frameBuffer = make([]byte, rfg.FrameSize)
+		default:
+
+		}
 	}
 }
 
 func (rfg *RtspCapturer) StopAIStreamer() {
-	rfg.aiCmd.Process.Signal(os.Interrupt)
+	rfg.mu.Lock()
+	defer rfg.mu.Unlock()
+
+	if rfg.aiCmd == nil {
+		return
+	}
+
+	if rfg.aiCmd.Process != nil {
+		rfg.aiCmd.Process.Signal(os.Interrupt)
+	}
 }
 
 func (rfg *RtspCapturer) GetCurrentAIFrame() ([]byte, bool) {
