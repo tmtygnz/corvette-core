@@ -26,5 +26,6 @@ func main() {
 	cameraRegistry.StartAllRegisteredCameras()
 
 	<-coreCtx.Done()
+	cameraRegistry.WaitToClose()
 	slog.Info("Corvette shutting down.")
 }
