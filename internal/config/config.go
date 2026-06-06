@@ -6,6 +6,7 @@ type Config struct {
 }
 
 type CameraInfo struct {
-	URL  string `toml:"url"`
-	Type string `toml:"type"`
+	URL     string `toml:"url"`
+	Type    string `toml:"type"`
+	CamName string `toml:"cam_name"`
 }
