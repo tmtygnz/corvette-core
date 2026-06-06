@@ -7,29 +7,24 @@ import (
 	"corvette/internal/streamer"
 	"corvette/internal/vendors"
 	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	coreCtx := context.Background()
+	coreCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
 	slog.Info("Corvette started.")
 	config := config.ReadConfig()
 
-	vendor := &vendors.RtspVendor{
-		GenericVendor: vendors.GenericVendor{
-			URL:     config.Cameras[0].URL,
-			Type:    config.Cameras[0].Type,
-			CamName: config.Cameras[0].CamName,
-		},
-	}
+	vendorsFromConfig := vendors.VendorMapper(config.Cameras)
+	streamers := streamer.StreamerMapper(vendorsFromConfig)
+	cameraRegistry := camera.CreateCameraRegistry(coreCtx)
+	cameraRegistry.RegisterArrStreamers(streamers)
+	cameraRegistry.StartAllRegisteredCameras()
 
-	streamingOpts := &streamer.CreateRtspStreamerOpts{
-		RtspVendor:   vendor,
-		StreamingFps: 2,
-		ScalingSize:  640,
-	}
-	streamer := streamer.CreateRtspStreamer(streamingOpts)
-	cameraHandler := camera.CreateCameraHandler(streamer, coreCtx)
-	cameraHandler.StartAllFunctions()
-
+	<-coreCtx.Done()
+	slog.Info("Corvette shutting down.")
 }

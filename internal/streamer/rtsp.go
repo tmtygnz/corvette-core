@@ -27,14 +27,14 @@ const (
 )
 
 type CreateRtspStreamerOpts struct {
-	RtspVendor *vendors.RtspVendor
+	RtspVendor vendors.Vendor
 
 	ScalingSize  int
 	StreamingFps int
 }
 
 type RtspStreamer struct {
-	rtspVendor *vendors.RtspVendor
+	rtspVendor vendors.Vendor
 	mu         sync.Mutex
 
 	// Recording
@@ -50,8 +50,8 @@ type RtspStreamer struct {
 }
 
 func CreateRtspStreamer(opts *CreateRtspStreamerOpts) *RtspStreamer {
-	if DoesThisFolderExist(opts.RtspVendor.CamName) == false {
-		CreateFolder(opts.RtspVendor.CamName)
+	if DoesThisFolderExist(opts.RtspVendor.CamName()) == false {
+		CreateFolder(opts.RtspVendor.CamName())
 	}
 
 	return &RtspStreamer{
@@ -70,11 +70,11 @@ func (rs *RtspStreamer) StartRecording(eGCtx context.Context) error {
 
 	if rs.isRecording == Running {
 		rs.mu.Unlock()
-		slog.Warn("Start recording called whilst recorder is already started.", "for", rs.rtspVendor.CamName)
+		slog.Warn("Start recording called whilst recorder is already started.", "for", rs.rtspVendor.CamName())
 		return ErrAlreadyRecording
 	}
 
-	folderPath := getPath(rs.rtspVendor.CamName)
+	folderPath := getPath(rs.rtspVendor.CamName())
 	dirPath := filepath.Join(folderPath, `out_%d-%m-%Y-%H-%M-%S.mp4`)
 
 	inputArgs := ffmpeg_go.KwArgs{
@@ -90,7 +90,7 @@ func (rs *RtspStreamer) StartRecording(eGCtx context.Context) error {
 		"strftime":         "1",
 	}
 
-	template := ffmpeg_go.Input(rs.rtspVendor.URL, inputArgs)
+	template := ffmpeg_go.Input(rs.rtspVendor.URL(), inputArgs)
 	templateWithContext := ffmpeg_go.OutputContext(eGCtx, []*ffmpeg_go.Stream{template}, dirPath, outputArgs).GlobalArgs("-loglevel", "error")
 
 	command := templateWithContext.Compile()
@@ -147,10 +147,10 @@ func (rs *RtspStreamer) StopRecording() error {
 	if rs.recCmd == nil || rs.recCmd.Process == nil {
 		return nil
 	}
-	slog.Info("Stop recording function tirggered.", "for", rs.rtspVendor.CamName)
+	slog.Info("Stop recording function tirggered.", "for", rs.rtspVendor.CamName())
 
 	if err := rs.recCmd.Process.Kill(); err != nil {
-		slog.Error("Failed to kill process.", "for", rs.rtspVendor.CamName, "err", err.Error())
+		slog.Error("Failed to kill process.", "for", rs.rtspVendor.CamName(), "err", err.Error())
 		return err
 	}
 	return nil
@@ -177,7 +177,7 @@ func (rs *RtspStreamer) StartAIStreaming(eGCtx context.Context) error {
 		"f":       "rawvideo",
 	}
 
-	template := ffmpeg_go.Input(rs.rtspVendor.URL, inputArgs)
+	template := ffmpeg_go.Input(rs.rtspVendor.URL(), inputArgs)
 	templateWithContext := ffmpeg_go.OutputContext(eGCtx, []*ffmpeg_go.Stream{template}, "pipe:1", outputArgs).GlobalArgs("-loglevel", "error")
 
 	command := templateWithContext.Compile()
@@ -260,7 +260,7 @@ func (rs *RtspStreamer) StopAIStreaming() error {
 		return nil
 	}
 	if err := rs.aiCmd.Process.Kill(); err != nil {
-		slog.Error("Failed to kill process.", "for", rs.rtspVendor.CamName, "err", err.Error())
+		slog.Error("Failed to kill process.", "for", rs.rtspVendor.CamName(), "err", err.Error())
 		return err
 	}
 	return nil
@@ -271,4 +271,11 @@ func (rs *RtspStreamer) GetAIFrame() []byte {
 	case data := <-rs.aiFrameChan:
 		return data
 	}
+}
+
+func (rs *RtspStreamer) Vendor() vendors.Vendor {
+	rs.mu.Lock()
+	defer rs.mu.Unlock()
+
+	return rs.rtspVendor
 }
