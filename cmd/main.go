@@ -8,12 +8,21 @@ import (
 	"corvette/internal/streamer"
 	"corvette/internal/vendors"
 	"log/slog"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
+func pprofStuffs() {
+	go func() {
+		http.ListenAndServe("localhost:6767", nil)
+	}()
+}
+
 func main() {
+	pprofStuffs()
 	coreCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 

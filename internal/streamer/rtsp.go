@@ -46,6 +46,7 @@ type RtspStreamer struct {
 	isStreaming  StreamState
 	aiCmd        *exec.Cmd
 	aiFrameChan  chan []float32
+	inputBuf     []float32
 	streamingFps int
 }
 
@@ -62,6 +63,7 @@ func CreateRtspStreamer(opts *CreateRtspStreamerOpts) *RtspStreamer {
 		isStreaming:  Stopped,
 		aiFrameChan:  make(chan []float32, 1),
 		streamingFps: opts.StreamingFps,
+		inputBuf:     make([]float32, opts.ScalingSize*opts.ScalingSize*3),
 	}
 }
 
@@ -268,16 +270,14 @@ func (rs *RtspStreamer) cleanupAiStreamer(cmd *exec.Cmd) {
 func (rs *RtspStreamer) prepareInput(frame []byte) []float32 {
 	size := rs.scalingSize * rs.scalingSize
 
-	input := make([]float32, size*3)
-
 	for i := range size {
 		// RGB Interleaved (byte) -> RGB Planar (float32)
-		input[i] = float32(frame[i*3]) / 255.0          // R
-		input[i+size] = float32(frame[i*3+1]) / 255.0   // G
-		input[i+size*2] = float32(frame[i*3+2]) / 255.0 // B
+		rs.inputBuf[i] = float32(frame[i*3]) / 255.0          // R
+		rs.inputBuf[i+size] = float32(frame[i*3+1]) / 255.0   // G
+		rs.inputBuf[i+size*2] = float32(frame[i*3+2]) / 255.0 // B
 	}
 
-	return input
+	return rs.inputBuf
 }
 
 func (rs *RtspStreamer) StopAIStreaming() error {
