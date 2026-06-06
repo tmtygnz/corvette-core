@@ -1,8 +1,0 @@
-password = "my-secret-password"
-
-[[cameras]]
-ip = "1.2.3.4"
-user = "admin"
-password = "super secure wifi password"
-endpoint = "live/here"
-port = 554
