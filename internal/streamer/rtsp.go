@@ -82,7 +82,7 @@ func (rs *RtspStreamer) StartRecording(eGCtx context.Context) error {
 	inputArgs := ffmpeg_go.KwArgs{
 		"rtsp_transport":  "tcp",
 		"timeout":         "5000000",
-		"analyzeduration": "0",
+		"analyzeduration": "2000000",
 	}
 
 	outputArgs := ffmpeg_go.KwArgs{
@@ -91,7 +91,7 @@ func (rs *RtspStreamer) StartRecording(eGCtx context.Context) error {
 		"segment_time":           "300",
 		"reset_timestamps":       "1",
 		"strftime":               "1",
-		"segment_format_options": "movflags=+faststart",
+		"segment_format_options": "movflags=frag_keyframe+empty_moov+default_base_moof",
 	}
 
 	template := ffmpeg_go.Input(rs.rtspVendor.URL(), inputArgs)
