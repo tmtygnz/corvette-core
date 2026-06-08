@@ -2,3 +2,4 @@ conf.toml
 recordings
 scripts
 models
+.env
