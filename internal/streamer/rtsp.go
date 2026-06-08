@@ -176,6 +176,7 @@ func (rs *RtspStreamer) StartAIStreaming(eGCtx context.Context) error {
 	}
 
 	inputArgs := ffmpeg_go.KwArgs{
+		"hwaccel":        "qsv",
 		"rtsp_transport": "tcp",
 		"timeout":        "5000000",
 		"fflags":         "nobuffer",
@@ -183,7 +184,7 @@ func (rs *RtspStreamer) StartAIStreaming(eGCtx context.Context) error {
 	}
 
 	outputArgs := ffmpeg_go.KwArgs{
-		"vf":      fmt.Sprintf("fps=%d,scale=640:640", rs.streamingFps),
+		"vf":      fmt.Sprintf("fps=%d,vpp_qsv=w=640:h=640", rs.streamingFps),
 		"c:v":     "rawvideo",
 		"pix_fmt": "rgb24",
 		"f":       "rawvideo",
