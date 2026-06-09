@@ -1,6 +1,7 @@
 package http_handlers
 
 import (
+	"context"
 	"corvette/internal/domains"
 	"corvette/internal/utils"
 	"log/slog"
@@ -22,7 +23,7 @@ func CreateCameraHttpHandler(app *fiber.App, cameraService domains.CameraService
 	}
 
 	app.Post("/cameras/register", handler.RegisterCameraEp)
-	app.Post("/camera", handler.UpdateCameraEp)
+	app.Patch("/camera", handler.UpdateCameraEp)
 
 	app.Get("/cameras/", handler.GetCamera)
 	app.Get("/cameras/online", handler.ListOnlineCameras)
@@ -34,6 +35,12 @@ func (chh *CameraHttpHandler) RegisterCameraEp(ctx fiber.Ctx) error {
 	cameraInfo := new(domains.RepoCreateCameraOpts)
 	if err := ctx.Bind().Body(cameraInfo); err != nil {
 		return utils.CreateMessage(ctx, fiber.StatusBadRequest, "Bad or malformed request. Check API docs.", nil)
+	}
+
+	if err := domains.ValidateRepoCreateCameraOptsContext(ctx.Context(), cameraInfo); err != nil {
+		if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
+			return utils.CreateMessage(ctx, fiber.StatusBadRequest, err.Error(), nil)
+		}
 	}
 
 	created, err := chh.cameraService.CreateCamera(cameraInfo)
@@ -70,6 +77,12 @@ func (chh *CameraHttpHandler) UpdateCameraEp(ctx fiber.Ctx) error {
 		return utils.CreateMessage(ctx, fiber.StatusInternalServerError, err.Error(), nil)
 	}
 
+	if err := domains.ValidateUpdateCameraOptsContext(ctx.Context(), updateData); err != nil {
+		if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
+			return utils.CreateMessage(ctx, fiber.StatusBadRequest, err.Error(), nil)
+		}
+	}
+
 	updatedCamera, err := chh.cameraService.UpdateCamera(updateData)
 	if err != nil {
 		return utils.CreateMessage(ctx, fiber.StatusInternalServerError, err.Error(), nil)
@@ -79,7 +92,7 @@ func (chh *CameraHttpHandler) UpdateCameraEp(ctx fiber.Ctx) error {
 }
 
 func (chh *CameraHttpHandler) DeleteCamera(ctx fiber.Ctx) error {
-	cameraId := ctx.Params("camID")
+	cameraId := ctx.Query("camID")
 	if cameraId == "" {
 		return utils.CreateMessage(ctx, fiber.StatusBadRequest, "Cam ID malformed or missing", nil)
 	}
@@ -96,7 +109,7 @@ func (chh *CameraHttpHandler) DeleteCamera(ctx fiber.Ctx) error {
 }
 
 func (chh *CameraHttpHandler) ListOnlineCameras(ctx fiber.Ctx) error {
-	data, err := chh.cameraService.ListCameras()
+	data, err := chh.cameraService.ListOnlineCameras()
 	if err != nil {
 		return utils.CreateMessage(ctx, fiber.StatusBadRequest, err.Error(), nil)
 	}

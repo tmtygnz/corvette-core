@@ -77,6 +77,7 @@ func (cr *CameraService) UpdateCamera(opts *domains.UpdateCameraOpts) (*domains.
 			Url:        opts.URL,
 			Type:       opts.Type,
 			SubUrl:     subUrl,
+			CameraID:   int64(opts.CameraId),
 		},
 	)
 	if err != nil {

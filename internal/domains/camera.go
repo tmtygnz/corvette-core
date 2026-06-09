@@ -16,17 +16,39 @@ type Camera struct {
 }
 
 type RepoCreateCameraOpts struct {
-	URL        string
-	SURL       string
-	Type       string
-	CameraName string
+	//govalid:required
+	//govalid:url
+	URL string `json:"url"`
+
+	//govalid:url
+	SURL string `json:"surl"`
+
+	//govalid:required
+	//govalid:enum=Generic
+	Type string `json:"type"`
+
+	//govalid:required
+	//govalid:minlength=3
+	//govalid:maxlength=100
+	CameraName string `json:"cameraName"`
 }
 
 type UpdateCameraOpts struct {
-	URL        string
-	SURL       string
-	Type       string
-	CameraName string
+	//govalid:url
+	URL string `json:"url"`
+
+	//govalid:url
+	SURL string `json:"surl"`
+
+	//govalid:enum=Generic
+	Type string `json:"type"`
+
+	//govalid:minlength=3
+	//govalid:maxlength=100
+	CameraName string `json:"cameraName"`
+
+	//govalid:required
+	CameraId int `json:"cameraId"`
 }
 
 type CameraService interface {

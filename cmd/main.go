@@ -49,7 +49,7 @@ func main() {
 
 	httpHandler := handler.NewHttpHandler()
 
-	httpHandler.Start(":8080")
+	httpHandler.Start(":9090")
 
 	cameraService := services.CreateCameraService(queries, coreCtx)
 	http_handlers.CreateCameraHttpHandler(httpHandler.App(), cameraService)

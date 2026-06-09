@@ -48,5 +48,5 @@ FROM camera;
 -- name: ListOnlineCameras :many
 SELECT *
 FROM camera
-WHERE status = 'online'
+WHERE status = 'Online'
 ORDER BY camera_name;

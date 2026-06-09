@@ -139,7 +139,7 @@ func (q *Queries) ListCameras(ctx context.Context) ([]Camera, error) {
 const listOnlineCameras = `-- name: ListOnlineCameras :many
 SELECT camera_id, camera_name, installed_at, status, url, sub_url, type
 FROM camera
-WHERE status = 'online'
+WHERE status = 'Online'
 ORDER BY camera_name
 `
 
