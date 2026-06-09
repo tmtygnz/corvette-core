@@ -23,8 +23,9 @@ func CreateCameraHttpHandler(app *fiber.App, cameraService domains.CameraService
 	}
 
 	app.Post("/cameras/register", handler.RegisterCameraEp)
-	app.Patch("/camera", handler.UpdateCameraEp)
+	app.Patch("/cameras", handler.UpdateCameraEp)
 
+	app.Get("/cameras/all", handler.ListAllCameras)
 	app.Get("/cameras/", handler.GetCamera)
 	app.Get("/cameras/online", handler.ListOnlineCameras)
 
@@ -110,6 +111,14 @@ func (chh *CameraHttpHandler) DeleteCamera(ctx fiber.Ctx) error {
 
 func (chh *CameraHttpHandler) ListOnlineCameras(ctx fiber.Ctx) error {
 	data, err := chh.cameraService.ListOnlineCameras()
+	if err != nil {
+		return utils.CreateMessage(ctx, fiber.StatusBadRequest, err.Error(), nil)
+	}
+	return utils.CreateMessage(ctx, fiber.StatusOK, "", data)
+}
+
+func (chh *CameraHttpHandler) ListAllCameras(ctx fiber.Ctx) error {
+	data, err := chh.cameraService.ListCameras()
 	if err != nil {
 		return utils.CreateMessage(ctx, fiber.StatusBadRequest, err.Error(), nil)
 	}
