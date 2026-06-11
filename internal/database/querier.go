@@ -11,10 +11,14 @@ import (
 type Querier interface {
 	CountCameras(ctx context.Context) (int64, error)
 	CreateCamera(ctx context.Context, arg CreateCameraParams) (Camera, error)
+	CreateRecording(ctx context.Context, arg CreateRecordingParams) (Recording, error)
 	DeleteCamera(ctx context.Context, cameraID int64) error
+	DeleteRecording(ctx context.Context, recordID int64) error
 	GetCamera(ctx context.Context, cameraID int64) (Camera, error)
 	ListCameras(ctx context.Context) ([]Camera, error)
 	ListOnlineCameras(ctx context.Context) ([]Camera, error)
+	ListRecordings(ctx context.Context) ([]Recording, error)
+	SetDuration(ctx context.Context, arg SetDurationParams) (Recording, error)
 	UpdateCamera(ctx context.Context, arg UpdateCameraParams) (Camera, error)
 	UpdateCameraStatus(ctx context.Context, arg UpdateCameraStatusParams) (Camera, error)
 }

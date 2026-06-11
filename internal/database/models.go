@@ -18,3 +18,11 @@ type Camera struct {
 	SubUrl      sql.NullString `json:"sub_url"`
 	Type        string         `json:"type"`
 }
+
+type Recording struct {
+	RecordID   int64     `json:"record_id"`
+	FromCamera int64     `json:"from_camera"`
+	FileName   string    `json:"file_name"`
+	StartedAt  time.Time `json:"started_at"`
+	Duration   int64     `json:"duration"`
+}

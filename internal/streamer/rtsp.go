@@ -276,10 +276,9 @@ func (rs *RtspStreamer) prepareInput(frame []byte) []float32 {
 	size := rs.scalingSize * rs.scalingSize
 
 	for i := range size {
-		// RGB Interleaved (byte) -> RGB Planar (float32)
-		rs.inputBuf[i] = float32(frame[i*3]) / 255.0          // R
-		rs.inputBuf[i+size] = float32(frame[i*3+1]) / 255.0   // G
-		rs.inputBuf[i+size*2] = float32(frame[i*3+2]) / 255.0 // B
+		rs.inputBuf[i] = float32(frame[i*3]) / 255.0
+		rs.inputBuf[i+size] = float32(frame[i*3+1]) / 255.0
+		rs.inputBuf[i+size*2] = float32(frame[i*3+2]) / 255.0
 	}
 
 	return rs.inputBuf

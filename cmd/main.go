@@ -27,21 +27,23 @@ func pprofStuffs() {
 }
 
 func main() {
+	slog.Info("Corvette started.")
 	pprofStuffs()
 	coreCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	config := config.ReadConfig()
 
 	dbProvider := provider.CreateSQLiteProvider()
 	defer dbProvider.Close()
 
 	queries := database.New(dbProvider.Conn)
-
-	slog.Info("Corvette started.")
-	config := config.ReadConfig()
+	cameraService := services.CreateCameraService(queries, coreCtx)
+	recordingService := services.CreateRecordingService(queries, coreCtx)
 
 	objectDetectionModel := object_detection.NewObjectDetectionModelInstance(config.OnnxDllPath, config.ObjDetectionModel)
 
-	vendorsFromConfig := vendors.VendorMapper(config.Cameras)
+	vendorsFromConfig := vendors.VendorMapperFromDb(cameraService)
 	streamers := streamer.StreamerMapper(vendorsFromConfig)
 	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel)
 	cameraRegistry.RegisterArrStreamers(streamers)
@@ -51,7 +53,6 @@ func main() {
 
 	httpHandler.Start(":9090")
 
-	cameraService := services.CreateCameraService(queries, coreCtx)
 	http_handlers.CreateCameraHttpHandler(httpHandler.App(), cameraService)
 
 	<-coreCtx.Done()
