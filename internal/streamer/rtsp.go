@@ -51,8 +51,11 @@ type RtspStreamer struct {
 }
 
 func CreateRtspStreamer(opts *CreateRtspStreamerOpts) *RtspStreamer {
-	if DoesThisFolderExist(opts.RtspVendor.CamName()) == false {
-		CreateFolder(opts.RtspVendor.CamName())
+	// Use ID so that even if the Camerar Name changes the videos and
+	// other information are in the same place
+	if DoesThisFolderExist(opts.RtspVendor.IDStr()) == false {
+		slog.Info("No Folder")
+		CreateFolder(opts.RtspVendor.IDStr())
 	}
 
 	return &RtspStreamer{
@@ -76,7 +79,7 @@ func (rs *RtspStreamer) StartRecording(eGCtx context.Context) error {
 		return ErrAlreadyRecording
 	}
 
-	folderPath := getPath(rs.rtspVendor.CamName())
+	folderPath := getPath(rs.rtspVendor.IDStr())
 	dirPath := filepath.Join(folderPath, `out_%d-%m-%Y-%H-%M-%S.mp4`)
 
 	inputArgs := ffmpeg_go.KwArgs{
@@ -88,7 +91,7 @@ func (rs *RtspStreamer) StartRecording(eGCtx context.Context) error {
 	outputArgs := ffmpeg_go.KwArgs{
 		"c":                      "copy",
 		"f":                      "segment",
-		"segment_time":           "300",
+		"segment_time":           "5",
 		"reset_timestamps":       "1",
 		"strftime":               "1",
 		"segment_format_options": "movflags=frag_keyframe+empty_moov+default_base_moof",
@@ -312,4 +315,8 @@ func (rs *RtspStreamer) Destroy() {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 	close(rs.aiFrameChan)
+}
+
+func (rs *RtspStreamer) GetPath() string {
+	return getPath(rs.Vendor().IDStr())
 }

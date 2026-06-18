@@ -1,12 +1,12 @@
 package vendors
 
 import (
-	"corvette/internal/config"
 	"corvette/internal/domains"
 	"log/slog"
 )
 
 type GenericVendor struct {
+	id      int
 	url     string
 	surl    string
 	camType string
@@ -14,25 +14,12 @@ type GenericVendor struct {
 }
 
 type Vendor interface {
+	ID() int
+	IDStr() string
 	URL() string
 	SURL() string
 	Type() string
 	CamName() string
-}
-
-func VendorMapper(configInfo []config.CameraInfo) []Vendor {
-	var vendors []Vendor
-	for _, vendorInfo := range configInfo {
-		switch vendorInfo.Type {
-		case "Generic":
-			newGenericCamera := CreateRtspVendor(vendorInfo.URL, vendorInfo.SURL, vendorInfo.Type, vendorInfo.CamName)
-			vendors = append(vendors, newGenericCamera)
-		}
-	}
-
-	slog.Info("Vendors mapped.")
-
-	return vendors
 }
 
 func VendorMapperFromDb(cameraService domains.CameraService) []Vendor {
@@ -46,7 +33,7 @@ func VendorMapperFromDb(cameraService domains.CameraService) []Vendor {
 		switch cameraInfo.Type {
 		case "Generic":
 			slog.Info("Created RTSP vendor.", "for", cameraInfo.CameraName)
-			newGenericCamera := CreateRtspVendor(cameraInfo.URL, cameraInfo.SURL, cameraInfo.Type, cameraInfo.CameraName)
+			newGenericCamera := CreateRtspVendor(cameraInfo.CameraId, cameraInfo.URL, cameraInfo.SURL, cameraInfo.Type, cameraInfo.CameraName)
 			vendors = append(vendors, newGenericCamera)
 		}
 	}

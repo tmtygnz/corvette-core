@@ -14,14 +14,16 @@ type CameraRegistry struct {
 	parentCtx      context.Context
 	wg             sync.WaitGroup
 	modelInstance  *object_detection.ObjectDetectionModelInstance
+	hlsWatchDog    *HLSWatchDog
 }
 
-func CreateCameraRegistry(ctx context.Context, modelInstance *object_detection.ObjectDetectionModelInstance) *CameraRegistry {
+func CreateCameraRegistry(ctx context.Context, modelInstance *object_detection.ObjectDetectionModelInstance, hlsWatchdog *HLSWatchDog) *CameraRegistry {
 	return &CameraRegistry{
 		cameraHandlers: map[string]*CameraHandler{},
 		parentCtx:      ctx,
 		wg:             sync.WaitGroup{},
 		modelInstance:  modelInstance,
+		hlsWatchDog:    hlsWatchdog,
 	}
 }
 
@@ -36,6 +38,7 @@ func (cr *CameraRegistry) RegisterArrStreamers(streamers []streamer.Streamer) {
 
 func (cr *CameraRegistry) StartAllRegisteredCameras() {
 	for _, handler := range cr.cameraHandlers {
+		cr.hlsWatchDog.AddRoute(handler.streamer.GetPath())
 		cr.wg.Add(1)
 		go func(handler *CameraHandler) {
 			defer cr.wg.Done()
@@ -58,6 +61,7 @@ func (cr *CameraRegistry) StartAllRegisteredCameras() {
 			}
 		}(handler)
 	}
+
 }
 
 func (cr *CameraRegistry) WaitToClose() {

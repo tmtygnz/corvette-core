@@ -3,15 +3,13 @@ A blazingly fast and robust Network Video Recorder (NVR) for residential and sma
 
 Features:
 
-[x] Camera Streaming & Recording
-
-[x] Camera AI Detection
-
-[ ] Events Logging
-
-[ ] Web UI Support
-
-[ ] ONVIF Support
+- [x] Camera Streaming & Recording
+- [x] Camera AI Detection
+- [ ] HLS playlist for video playback
+- [ ] Livestreaming
+- [ ] Events Logging
+- [ ] Web UI Support
+- [ ] ONVIF Support
 
 ### Licensing
 

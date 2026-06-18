@@ -4,6 +4,7 @@ go 1.26.3
 
 require (
 	github.com/BurntSushi/toml v1.6.0
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gofiber/fiber/v3 v3.3.0
 	github.com/ncruces/go-sqlite3 v0.34.4
 	github.com/sivchari/govalid v1.9.0
