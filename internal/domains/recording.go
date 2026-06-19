@@ -10,7 +10,7 @@ type Recording struct {
 	FromCamera int
 	FileName   string
 	StartedAt  time.Time
-	Duration   int // max 5 mins
+	EndedAt    *time.Time
 }
 
 type CreateRecordingOpts struct {
@@ -25,9 +25,17 @@ type CreateRecordingOpts struct {
 	StartedAt time.Time
 }
 
+type GetRecordingForOpts struct {
+	FromCamera int64
+	FileName   string
+	StartedAt  time.Time
+	Duration   int64
+}
+
 type RecordingService interface {
-	CreateRecording() (*Recording, error)
-	SetDuration(duration int, id int) (*Recording, error)
+	CreateRecording(opts *CreateRecordingOpts) (*Recording, error)
+	SetEndAt(endTime time.Time, id int) (*Recording, error)
+	GetRecordingFor(*GetRecordingForOpts) ([]*Recording, error)
 	ListRecordings() ([]*Recording, error)
 	DeleteRecording(id int) error
 }
@@ -38,6 +46,6 @@ func RecordingFromSQLC(raw database.Recording) *Recording {
 		FromCamera: int(raw.FromCamera),
 		FileName:   raw.FileName,
 		StartedAt:  raw.StartedAt,
-		Duration:   int(raw.Duration),
+		EndedAt:    &raw.EndedAt.Time,
 	}
 }

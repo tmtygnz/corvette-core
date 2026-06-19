@@ -5,6 +5,7 @@ import (
 	"corvette/internal/camera"
 	"corvette/internal/config"
 	"corvette/internal/database"
+	"corvette/internal/hls"
 	"corvette/internal/object_detection"
 	"corvette/internal/platform/handler"
 	http_handlers "corvette/internal/platform/handler/handlers"
@@ -46,13 +47,12 @@ func main() {
 	vendorsFromConfig := vendors.VendorMapperFromDb(cameraService)
 	streamers := streamer.StreamerMapper(vendorsFromConfig)
 
-	hlsWatchdog := camera.CreateHLSWatchDog(recordingService)
+	hlsWatchdog := hls.CreateHLSWatchDog(recordingService)
 
 	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel, hlsWatchdog)
 	cameraRegistry.RegisterArrStreamers(streamers)
 	cameraRegistry.StartAllRegisteredCameras()
 
-	// Start cameras once recording have started.
 	hlsWatchdog.Watch(coreCtx)
 
 	httpHandler := handler.NewHttpHandler()

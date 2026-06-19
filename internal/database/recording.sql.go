@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -14,40 +15,34 @@ const createRecording = `-- name: CreateRecording :one
 INSERT INTO recording (
     from_camera,
     file_name,
-    started_at,
-    duration
+    started_at
 )
-VALUES (?, ?, ?, ?)
-RETURNING record_id, from_camera, file_name, started_at, duration
+VALUES (?, ?, ?)
+RETURNING record_id, from_camera, file_name, started_at, ended_at
 `
 
 type CreateRecordingParams struct {
 	FromCamera int64     `json:"from_camera"`
 	FileName   string    `json:"file_name"`
 	StartedAt  time.Time `json:"started_at"`
-	Duration   int64     `json:"duration"`
 }
 
 func (q *Queries) CreateRecording(ctx context.Context, arg CreateRecordingParams) (Recording, error) {
-	row := q.db.QueryRowContext(ctx, createRecording,
-		arg.FromCamera,
-		arg.FileName,
-		arg.StartedAt,
-		arg.Duration,
-	)
+	row := q.db.QueryRowContext(ctx, createRecording, arg.FromCamera, arg.FileName, arg.StartedAt)
 	var i Recording
 	err := row.Scan(
 		&i.RecordID,
 		&i.FromCamera,
 		&i.FileName,
 		&i.StartedAt,
-		&i.Duration,
+		&i.EndedAt,
 	)
 	return i, err
 }
 
 const deleteRecording = `-- name: DeleteRecording :exec
-DELETE FROM recording WHERE record_id = ?
+DELETE FROM recording
+WHERE record_id = ?
 `
 
 func (q *Queries) DeleteRecording(ctx context.Context, recordID int64) error {
@@ -55,8 +50,73 @@ func (q *Queries) DeleteRecording(ctx context.Context, recordID int64) error {
 	return err
 }
 
+const getRecordingByID = `-- name: GetRecordingByID :one
+SELECT record_id, from_camera, file_name, started_at, ended_at
+FROM recording
+WHERE record_id = ?
+`
+
+func (q *Queries) GetRecordingByID(ctx context.Context, recordID int64) (Recording, error) {
+	row := q.db.QueryRowContext(ctx, getRecordingByID, recordID)
+	var i Recording
+	err := row.Scan(
+		&i.RecordID,
+		&i.FromCamera,
+		&i.FileName,
+		&i.StartedAt,
+		&i.EndedAt,
+	)
+	return i, err
+}
+
+const getRecordingFor = `-- name: GetRecordingFor :many
+SELECT record_id, from_camera, file_name, started_at, ended_at
+FROM recording
+WHERE from_camera = ?
+  AND started_at <= ?
+  AND ended_at >= ?
+ORDER BY started_at ASC
+`
+
+type GetRecordingForParams struct {
+	FromCamera int64        `json:"from_camera"`
+	StartedAt  time.Time    `json:"started_at"`
+	EndedAt    sql.NullTime `json:"ended_at"`
+}
+
+func (q *Queries) GetRecordingFor(ctx context.Context, arg GetRecordingForParams) ([]Recording, error) {
+	rows, err := q.db.QueryContext(ctx, getRecordingFor, arg.FromCamera, arg.StartedAt, arg.EndedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Recording{}
+	for rows.Next() {
+		var i Recording
+		if err := rows.Scan(
+			&i.RecordID,
+			&i.FromCamera,
+			&i.FileName,
+			&i.StartedAt,
+			&i.EndedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecordings = `-- name: ListRecordings :many
-SELECT record_id, from_camera, file_name, started_at, duration FROM recording ORDER BY started_at
+SELECT record_id, from_camera, file_name, started_at, ended_at
+FROM recording
+ORDER BY started_at ASC
 `
 
 func (q *Queries) ListRecordings(ctx context.Context) ([]Recording, error) {
@@ -73,7 +133,7 @@ func (q *Queries) ListRecordings(ctx context.Context) ([]Recording, error) {
 			&i.FromCamera,
 			&i.FileName,
 			&i.StartedAt,
-			&i.Duration,
+			&i.EndedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -88,27 +148,27 @@ func (q *Queries) ListRecordings(ctx context.Context) ([]Recording, error) {
 	return items, nil
 }
 
-const setDuration = `-- name: SetDuration :one
+const setEndTime = `-- name: SetEndTime :one
 UPDATE recording
-SET duration = ?
+SET ended_at = ?
 WHERE record_id = ?
-RETURNING record_id, from_camera, file_name, started_at, duration
+RETURNING record_id, from_camera, file_name, started_at, ended_at
 `
 
-type SetDurationParams struct {
-	Duration int64 `json:"duration"`
-	RecordID int64 `json:"record_id"`
+type SetEndTimeParams struct {
+	EndedAt  sql.NullTime `json:"ended_at"`
+	RecordID int64        `json:"record_id"`
 }
 
-func (q *Queries) SetDuration(ctx context.Context, arg SetDurationParams) (Recording, error) {
-	row := q.db.QueryRowContext(ctx, setDuration, arg.Duration, arg.RecordID)
+func (q *Queries) SetEndTime(ctx context.Context, arg SetEndTimeParams) (Recording, error) {
+	row := q.db.QueryRowContext(ctx, setEndTime, arg.EndedAt, arg.RecordID)
 	var i Recording
 	err := row.Scan(
 		&i.RecordID,
 		&i.FromCamera,
 		&i.FileName,
 		&i.StartedAt,
-		&i.Duration,
+		&i.EndedAt,
 	)
 	return i, err
 }

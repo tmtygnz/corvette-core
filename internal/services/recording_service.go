@@ -4,7 +4,9 @@ import (
 	"context"
 	"corvette/internal/database"
 	"corvette/internal/domains"
+	"database/sql"
 	"log/slog"
+	"time"
 )
 
 type RecordingService struct {
@@ -25,7 +27,6 @@ func (rs *RecordingService) CreateRecording(opts *domains.CreateRecordingOpts) (
 		FromCamera: int64(opts.FromCamera),
 		FileName:   opts.FileName,
 		StartedAt:  opts.StartedAt,
-		Duration:   0,
 	})
 
 	if err != nil {
@@ -35,9 +36,13 @@ func (rs *RecordingService) CreateRecording(opts *domains.CreateRecordingOpts) (
 	return domains.RecordingFromSQLC(recording), nil
 }
 
-func (rs *RecordingService) SetDuration(duration int, id int) (*domains.Recording, error) {
-	recording, err := rs.db.SetDuration(rs.ctx, database.SetDurationParams{
-		Duration: int64(duration),
+func (rs *RecordingService) SetEndAt(endTime time.Time, id int) (*domains.Recording, error) {
+	nullEndTime := sql.NullTime{
+		Time:  endTime,
+		Valid: true,
+	}
+	recording, err := rs.db.SetEndTime(rs.ctx, database.SetEndTimeParams{
+		EndedAt:  nullEndTime,
 		RecordID: int64(id),
 	})
 

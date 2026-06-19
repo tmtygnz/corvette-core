@@ -20,9 +20,9 @@ type Camera struct {
 }
 
 type Recording struct {
-	RecordID   int64     `json:"record_id"`
-	FromCamera int64     `json:"from_camera"`
-	FileName   string    `json:"file_name"`
-	StartedAt  time.Time `json:"started_at"`
-	Duration   int64     `json:"duration"`
+	RecordID   int64        `json:"record_id"`
+	FromCamera int64        `json:"from_camera"`
+	FileName   string       `json:"file_name"`
+	StartedAt  time.Time    `json:"started_at"`
+	EndedAt    sql.NullTime `json:"ended_at"`
 }
