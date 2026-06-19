@@ -1,7 +1,10 @@
-## Corvette Core
-A blazingly fast and robust Network Video Recorder (NVR) for residential and small business use.
+# Corvette Core
 
-Features:
+A blazingly fast and robust Network Video Recorder (NVR) tailored for residential and small business use.
+
+---
+
+## Features
 
 - [x] Camera Streaming & Recording
 - [x] Camera AI Detection
@@ -11,13 +14,16 @@ Features:
 - [ ] Web UI Support
 - [ ] ONVIF Support
 
-### Licensing
+---
 
-This project is published under the **GNU Lesser General Public License (LGPL)**. By using, modifying, or distributing this software, you agree to the following terms:
+## Licensing
 
-* **Modifications Must Be Open-Source:** If you modify the source code of `corvette-core` and distribute your product, you must make the source code of your modified version publicly available under the same LGPL license.
-* **Proprietary Linking Allowed:** You may link your own proprietary or closed-source applications to `corvette-core` (dynamically or statically) without being required to open-source your unique application code.
-* **Conveyance of Rights:** Anyone who receives a copy of this software from you must be given the same rights to view, modify, and redistribute the `corvette-core` source code.
-* **No Warranty:** This software is provided "as is" without warranties of any kind. 
+This project is published under the **GNU Affero General Public License (AGPLv3)**. By using, modifying, or interacting with this software over a network, you agree to the following terms:
 
-> For the full legal text and details, please refer to the `LICENSE` file included in this repository or visit the [GNU Official Website](https://www.gnu.org/licenses/lgpl-3.0.html).
+* **Network Service Disclosure:** If you modify `corvette-core` and run it on a server to provide services to users over a network (e.g., hosting it as a cloud NVR service), you **must** make the complete source code of your modified version available to those network users for free.
+* **Strong Copyleft & Modifications:** If you modify the source code and distribute or host it, your modifications must be released publicly under the same AGPLv3 license.
+* **No Proprietary Bundling:** Any larger work, proprietary system, or application that integrates deeply or bundles with `corvette-core` may also be subject to AGPL copyleft requirements.
+* **Conveyance of Rights:** Anyone who receives or interacts with this software must be given the same rights to view, modify, and redistribute the `corvette-core` source code.
+* **No Warranty:** This software is provided "as is" without warranties of any kind.
+
+> For the full legal text and details, please refer to the `LICENSE` file included in this repository or visit the [GNU Official Website](https://www.gnu.org/licenses/agpl-3.0.html).
