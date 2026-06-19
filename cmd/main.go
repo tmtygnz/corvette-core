@@ -49,6 +49,8 @@ func main() {
 
 	hlsWatchdog := hls.CreateHLSWatchDog(recordingService)
 
+	hlsCompiler := hls.CreateHLSCompiler(recordingService)
+
 	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel, hlsWatchdog)
 	cameraRegistry.RegisterArrStreamers(streamers)
 	cameraRegistry.StartAllRegisteredCameras()
@@ -56,10 +58,10 @@ func main() {
 	hlsWatchdog.Watch(coreCtx)
 
 	httpHandler := handler.NewHttpHandler()
+	http_handlers.CreateCameraHttpHandler(httpHandler.App(), cameraService)
+	http_handlers.CreatePlaybackHttpHandler(httpHandler.App(), hlsCompiler, recordingService)
 
 	httpHandler.Start(":9090")
-
-	http_handlers.CreateCameraHttpHandler(httpHandler.App(), cameraService)
 
 	<-coreCtx.Done()
 	cameraRegistry.WaitToClose()

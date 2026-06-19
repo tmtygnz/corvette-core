@@ -53,6 +53,28 @@ func (rs *RecordingService) SetEndAt(endTime time.Time, id int) (*domains.Record
 	return domains.RecordingFromSQLC(recording), nil
 }
 
+func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) ([]*domains.Recording, error) {
+	endedAt := sql.NullTime{
+		Time:  opts.EndedAt,
+		Valid: true,
+	}
+	data, err := rs.db.GetRecordingFor(rs.ctx, database.GetRecordingForParams{
+		StartedAt: opts.StartedAt,
+		EndedAt:   endedAt,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var recordings []*domains.Recording
+	for _, rawRecording := range data {
+		recordings = append(recordings, domains.RecordingFromSQLC(rawRecording))
+	}
+
+	return recordings, nil
+}
+
 func (rs *RecordingService) ListRecordings() ([]*domains.Recording, error) {
 	rawRecordings, err := rs.db.ListRecordings(rs.ctx)
 

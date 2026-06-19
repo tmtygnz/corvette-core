@@ -41,6 +41,7 @@ func (hc *HLSCompiler) Compile(recs []*domains.Recording) {
 		}
 
 		time, err := getEndDate(recording.FileName, recording.StartedAt, recording.RecordID)
+		slog.Info("end date found.", "date", time)
 
 		if err != nil {
 			slog.Info("Failed to probe. Not adding to the playlist.", "err", err.Error(), "fileName", recording.FileName)

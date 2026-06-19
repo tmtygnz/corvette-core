@@ -27,15 +27,14 @@ type CreateRecordingOpts struct {
 
 type GetRecordingForOpts struct {
 	FromCamera int64
-	FileName   string
 	StartedAt  time.Time
-	Duration   int64
+	EndedAt    time.Time
 }
 
 type RecordingService interface {
 	CreateRecording(opts *CreateRecordingOpts) (*Recording, error)
 	SetEndAt(endTime time.Time, id int) (*Recording, error)
-	GetRecordingFor(*GetRecordingForOpts) ([]*Recording, error)
+	GetRecordingFor(opts *GetRecordingForOpts) ([]*Recording, error)
 	ListRecordings() ([]*Recording, error)
 	DeleteRecording(id int) error
 }
