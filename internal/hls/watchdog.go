@@ -12,9 +12,15 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+type ETS struct {
+	startedAt   time.Time
+	recordingId int
+}
+
 type HLSWatchDog struct {
 	rs      *services.RecordingService
 	watcher *fsnotify.Watcher
+	ets     map[string]ETS
 }
 
 func CreateHLSWatchDog(rs *services.RecordingService) *HLSWatchDog {
@@ -26,6 +32,7 @@ func CreateHLSWatchDog(rs *services.RecordingService) *HLSWatchDog {
 	return &HLSWatchDog{
 		rs:      rs,
 		watcher: watcher,
+		ets:     make(map[string]ETS),
 	}
 }
 
@@ -57,10 +64,6 @@ func (hwd *HLSWatchDog) watchRoutine(ctx context.Context) {
 				return
 			}
 
-			if event.Op != fsnotify.Create {
-				continue
-			}
-
 			rawCamId := filepath.Base(filepath.Dir(event.Name))
 
 			camId, err := strconv.Atoi(rawCamId)
@@ -68,9 +71,15 @@ func (hwd *HLSWatchDog) watchRoutine(ctx context.Context) {
 				slog.Error("Failed to convert to int id. CamIDs shall only be an int.", "id", rawCamId)
 				continue
 			}
-
 			fileName := filepath.Base(event.Name)
-			hwd.NewFileHandler(camId, fileName)
+
+			if event.Op == fsnotify.Create {
+				hwd.NewFileHandler(camId, fileName)
+			}
+
+			if event.Op == fsnotify.Write {
+				hwd.HandleProbe(camId, fileName)
+			}
 
 		case err, ok := <-hwd.watcher.Errors:
 			if !ok {
@@ -81,12 +90,33 @@ func (hwd *HLSWatchDog) watchRoutine(ctx context.Context) {
 	}
 }
 
+func (hwd *HLSWatchDog) HandleProbe(camID int, fileName string) {
+	recording := hwd.ets[fileName]
+	endTime, err := getEndDate(fileName, recording.startedAt, camID)
+	if err != nil {
+		slog.Error("Failed to get end date. Removing to db.", "cameraId", camID, "fileName", fileName, "err", err.Error())
+		hwd.rs.DeleteRecording(recording.recordingId)
+		return
+	}
+
+	hwd.rs.SetEndAt(*endTime, recording.recordingId)
+
+	delete(hwd.ets, fileName)
+}
+
 func (hwd *HLSWatchDog) NewFileHandler(camId int, fileName string) {
-	hwd.rs.CreateRecording(&domains.CreateRecordingOpts{
+	recording, err := hwd.rs.CreateRecording(&domains.CreateRecordingOpts{
 		FromCamera: camId,
 		FileName:   fileName,
 		StartedAt:  time.Now(),
 	})
+	if err != nil {
+		slog.Error("Failed to record file.", "cameraId", camId, "fileName", fileName, "err", err.Error())
+	}
 
+	hwd.ets[fileName] = ETS{
+		startedAt:   recording.StartedAt,
+		recordingId: recording.RecordID,
+	}
 	slog.Info("New file recorded.", "cameraId", camId, "fileName", fileName)
 }
