@@ -38,14 +38,11 @@ func (phh *PlaybackHttpHandler) Today(ctx fiber.Ctx) error {
 		return utils.CreateMessage(ctx, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	now := time.Now()
-	startOfDay := time.Date(
-		now.Year(), now.Month(), now.Day(),
-		0, 0, 0, 0,
-		now.Location(),
-	)
+	location := time.FixedZone("GMT+8", 8*60*60)
+	now := time.Now().In(location)
 
-	endOfDay := startOfDay.AddDate(0, 0, 1).Add(-time.Nanosecond)
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
+	endOfDay := startOfDay.AddDate(0, 0, 1)
 
 	recordings, err := phh.rs.GetRecordingFor(&domains.GetRecordingForOpts{FromCamera: int64(cameraIdInt), StartedAt: startOfDay, EndedAt: endOfDay})
 

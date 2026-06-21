@@ -59,8 +59,9 @@ func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) (
 		Valid: true,
 	}
 	data, err := rs.db.GetRecordingFor(rs.ctx, database.GetRecordingForParams{
-		StartedAt: opts.StartedAt,
-		EndedAt:   endedAt,
+		StartedAt:  opts.StartedAt,
+		EndedAt:    endedAt,
+		FromCamera: opts.FromCamera,
 	})
 
 	if err != nil {
