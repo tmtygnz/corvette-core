@@ -17,8 +17,8 @@ RETURNING *;
 SELECT *
 FROM recording
 WHERE from_camera = ?
-  AND started_at >= ?
-  AND ended_at < ?
+  AND started_at < ?
+  AND (ended_at IS NULL OR ended_at >= ?)
 ORDER BY started_at ASC;
 
 -- name: ListRecordings :many
