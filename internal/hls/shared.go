@@ -62,7 +62,7 @@ func getEndDate(fileName string, startedAt time.Time, id int) (*time.Time, error
 	}
 
 	etime := startedAt.Add(secs)
-
+	slog.Info("Etime", "etime", etime.Second())
 	return &etime, nil
 }
 

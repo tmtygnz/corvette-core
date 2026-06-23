@@ -50,7 +50,7 @@ func (phh *PlaybackHttpHandler) Today(ctx fiber.Ctx) error {
 		return utils.CreateMessage(ctx, fiber.StatusInternalServerError, err.Error(), nil)
 	}
 
-	phh.hlsCompiler.Compile(recordings)
+	hlsString := phh.hlsCompiler.Compile(recordings, startOfDay, endOfDay)
 
-	return utils.CreateMessage(ctx, fiber.StatusOK, "", nil)
+	return ctx.SendString(hlsString)
 }

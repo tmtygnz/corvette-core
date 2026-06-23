@@ -3,7 +3,9 @@ package hls
 import (
 	"corvette/internal/domains"
 	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 )
 
@@ -17,9 +19,9 @@ const (
 )
 
 type HLSItem struct {
-	itemType       HLSItemType
-	duration       float64
-	videoSegmentId int
+	itemType         HLSItemType
+	duration         float64
+	videoSegmentPath string
 }
 
 type HLSCompiler struct {
@@ -32,13 +34,15 @@ func CreateHLSCompiler(rs domains.RecordingService) *HLSCompiler {
 	}
 }
 
-func (hc *HLSCompiler) Compile(recs []*domains.Recording, timeStartRef time.Time, timeEndRef time.Time) {
+func (hc *HLSCompiler) Compile(recs *[]domains.Recording, timeStartRef time.Time, timeEndRef time.Time) string {
 	validRecordings := hc.ValidateRecordings(recs)
 	startOffset, endOffset := hc.GetStartEndOffset(validRecordings, timeStartRef, timeEndRef)
 	orderedItems := hc.OrderBuilder(startOffset, endOffset, validRecordings)
+	hlsString := hc.HLSFileBuilder(orderedItems)
+	return hlsString
 }
 
-func (hc *HLSCompiler) OrderBuilder(startOffset, endOffset time.Duration, validRecordings []*domains.Recording) []HLSItem {
+func (hc *HLSCompiler) OrderBuilder(startOffset, endOffset time.Duration, validRecordings *[]domains.Recording) []HLSItem {
 	orderedItems := []HLSItem{}
 
 	if startOffset < 0 {
@@ -48,25 +52,26 @@ func (hc *HLSCompiler) OrderBuilder(startOffset, endOffset time.Duration, validR
 		})
 	}
 
-	for i, recording := range validRecordings {
+	for i, recording := range *validRecordings {
 		vdur := recording.EndedAt.Sub(recording.StartedAt)
 		effectiveVDur := vdur
 
 		var delta time.Duration
-		hasNext := i < len(validRecordings)-1
+		hasNext := i < len((*validRecordings))-1
 		if hasNext {
-			nextSegment := validRecordings[i+1]
-			delta = recording.EndedAt.Sub(*&nextSegment.StartedAt)
+			nextSegment := (*validRecordings)[i+1]
+			delta = recording.EndedAt.Sub(nextSegment.StartedAt)
 
 			if delta > 0 {
 				effectiveVDur -= delta
 			}
 		}
 
+		videoSegmentPath := fmt.Sprintf("./recordings/%s/%s", recording.FromCamera, recording.FileName)
 		orderedItems = append(orderedItems, HLSItem{
-			itemType:       VideoSegment,
-			duration:       effectiveVDur.Seconds(),
-			videoSegmentId: i,
+			itemType:         VideoSegment,
+			duration:         effectiveVDur.Seconds(),
+			videoSegmentPath: videoSegmentPath,
 		})
 
 		if hasNext && delta < 0 {
@@ -87,10 +92,10 @@ func (hc *HLSCompiler) OrderBuilder(startOffset, endOffset time.Duration, validR
 	return orderedItems
 }
 
-func (hc *HLSCompiler) ValidateRecordings(recs []*domains.Recording) []*domains.Recording {
-	valid := recs[:0]
+func (hc *HLSCompiler) ValidateRecordings(recs *[]domains.Recording) *[]domains.Recording {
+	valid := (*recs)[:0]
 
-	for _, recording := range recs {
+	for _, recording := range *recs {
 		if recording.EndedAt != nil {
 			valid = append(valid, recording)
 			continue
@@ -99,7 +104,7 @@ func (hc *HLSCompiler) ValidateRecordings(recs []*domains.Recording) []*domains.
 		endAt, err := getEndDate(
 			recording.FileName,
 			recording.StartedAt,
-			recording.RecordID,
+			recording.FromCamera,
 		)
 		if err != nil {
 			slog.Info(
@@ -122,15 +127,32 @@ func (hc *HLSCompiler) ValidateRecordings(recs []*domains.Recording) []*domains.
 		recording.EndedAt = endAt
 		valid = append(valid, recording)
 	}
-	return valid
+	return &valid
 }
 
-func (hc *HLSCompiler) GetStartEndOffset(validRecording []*domains.Recording, currentDate time.Time, endOfDay time.Time) (time.Duration, time.Duration) {
-	firstRecording := validRecording[0]
-	lastRecording := validRecording[len(validRecording)-1]
+func (hc *HLSCompiler) GetStartEndOffset(validRecording *[]domains.Recording, currentDate time.Time, endOfDay time.Time) (time.Duration, time.Duration) {
+	firstRecording := (*validRecording)[0]
+	lastRecording := (*validRecording)[len(*validRecording)-1]
 
 	startOffset := currentDate.Sub(firstRecording.StartedAt)
 	endOffset := endOfDay.Sub(*lastRecording.EndedAt)
 
 	return startOffset, endOffset
+}
+
+func (hc *HLSCompiler) HLSFileBuilder(orderedItems []HLSItem) string {
+	var hlsStringBuilder strings.Builder
+	hlsStringBuilder.WriteString("#EXTM3U\n")
+	hlsStringBuilder.WriteString("#EXT-X-VERSION:3\n")
+	for _, item := range orderedItems {
+		hlsStringBuilder.WriteString(fmt.Sprintf("#EXTINF:%.3f,\n", item.duration))
+		if item.itemType == VideoSegment {
+			hlsStringBuilder.WriteString(item.videoSegmentPath + "\n")
+		} else {
+			hlsStringBuilder.WriteString("./recordings/black.mp4\n")
+		}
+	}
+
+	hlsStringBuilder.WriteString("#EXT-X-ENDLIST\n")
+	return hlsStringBuilder.String()
 }

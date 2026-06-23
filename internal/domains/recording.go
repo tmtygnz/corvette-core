@@ -34,17 +34,24 @@ type GetRecordingForOpts struct {
 type RecordingService interface {
 	CreateRecording(opts *CreateRecordingOpts) (*Recording, error)
 	SetEndAt(endTime time.Time, id int) (*Recording, error)
-	GetRecordingFor(opts *GetRecordingForOpts) ([]*Recording, error)
+	GetRecordingFor(opts *GetRecordingForOpts) (*[]Recording, error)
 	ListRecordings() ([]*Recording, error)
 	DeleteRecording(id int) error
 }
 
 func RecordingFromSQLC(raw database.Recording) *Recording {
+	var endedAtPtr *time.Time
+
+	if raw.EndedAt.Valid {
+		t := raw.EndedAt.Time
+		endedAtPtr = &t
+	}
+
 	return &Recording{
 		RecordID:   int(raw.RecordID),
 		FromCamera: int(raw.FromCamera),
 		FileName:   raw.FileName,
 		StartedAt:  raw.StartedAt,
-		EndedAt:    &raw.EndedAt.Time,
+		EndedAt:    endedAtPtr, // Safe pointer containing your real DB date!
 	}
 }
