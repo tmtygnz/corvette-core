@@ -5,11 +5,11 @@ import (
 	"corvette/internal/camera"
 	"corvette/internal/config"
 	"corvette/internal/database"
-	"corvette/internal/hls"
 	"corvette/internal/object_detection"
 	"corvette/internal/platform/handler"
 	http_handlers "corvette/internal/platform/handler/handlers"
 	"corvette/internal/platform/provider"
+	"corvette/internal/playback"
 	"corvette/internal/services"
 	"corvette/internal/streamer"
 	"corvette/internal/vendors"
@@ -47,7 +47,7 @@ func main() {
 	vendorsFromConfig := vendors.VendorMapperFromDb(cameraService)
 	streamers := streamer.StreamerMapper(vendorsFromConfig)
 
-	hlsWatchdog := hls.CreateHLSWatchDog(recordingService)
+	hlsWatchdog := playback.CreateVidSegmentWatchDog(recordingService)
 
 	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel, hlsWatchdog)
 	cameraRegistry.RegisterArrStreamers(streamers)
