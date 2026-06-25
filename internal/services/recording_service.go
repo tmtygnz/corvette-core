@@ -54,13 +54,13 @@ func (rs *RecordingService) SetEndAt(endTime time.Time, id int) (*domains.Record
 }
 
 func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) (*[]domains.Recording, error) {
-	endedAt := sql.NullTime{
-		Time:  opts.EndedAt,
+	qStart := sql.NullTime{
+		Time:  opts.QueryStart,
 		Valid: true,
 	}
 	data, err := rs.db.GetRecordingFor(rs.ctx, database.GetRecordingForParams{
-		StartedAt:  opts.StartedAt,
-		EndedAt:    endedAt,
+		StartedAt:  opts.QueryEnd,
+		EndedAt:    qStart,
 		FromCamera: opts.FromCamera,
 	})
 

@@ -18,9 +18,10 @@ type ETS struct {
 }
 
 type HLSWatchDog struct {
-	rs      *services.RecordingService
-	watcher *fsnotify.Watcher
-	ets     map[string]ETS
+	rs             *services.RecordingService
+	watcher        *fsnotify.Watcher
+	ets            map[string]ETS
+	endTimeTracker map[int]time.Time
 }
 
 func CreateHLSWatchDog(rs *services.RecordingService) *HLSWatchDog {
@@ -30,9 +31,10 @@ func CreateHLSWatchDog(rs *services.RecordingService) *HLSWatchDog {
 		panic(err)
 	}
 	return &HLSWatchDog{
-		rs:      rs,
-		watcher: watcher,
-		ets:     make(map[string]ETS),
+		rs:             rs,
+		watcher:        watcher,
+		ets:            make(map[string]ETS),
+		endTimeTracker: make(map[int]time.Time),
 	}
 }
 
@@ -90,25 +92,36 @@ func (hwd *HLSWatchDog) watchRoutine(ctx context.Context) {
 	}
 }
 
-func (hwd *HLSWatchDog) HandleProbe(camID int, fileName string) {
+func (hwd *HLSWatchDog) HandleProbe(camId int, fileName string) {
 	recording := hwd.ets[fileName]
-	endTime, err := getEndDate(fileName, recording.startedAt, camID)
+	endTime, duration, err := getEndDate(fileName, recording.startedAt, camId)
 	if err != nil {
-		slog.Error("Failed to get end date. Removing to db.", "cameraId", camID, "fileName", fileName, "err", err.Error())
+		slog.Error("Failed to get end date. Removing to db.", "cameraId", camId, "fileName", fileName, "err", err.Error())
 		hwd.rs.DeleteRecording(recording.recordingId)
 		return
 	}
 
-	hwd.rs.SetEndAt(*endTime, recording.recordingId)
-
+	hwd.endTimeTracker[camId] = hwd.endTimeTracker[camId].Add(duration)
+	hwd.rs.SetEndAt(endTime, recording.recordingId)
 	delete(hwd.ets, fileName)
+
+	slog.Info("New file updated.", "cameraId", camId, "endedAtTime", endTime)
 }
 
 func (hwd *HLSWatchDog) NewFileHandler(camId int, fileName string) {
+	startedTime := time.Now()
+	previousEndTime, ok := hwd.endTimeTracker[camId]
+
+	if !ok {
+		hwd.endTimeTracker[camId] = startedTime
+	} else if ok {
+		startedTime = previousEndTime
+	}
+
 	recording, err := hwd.rs.CreateRecording(&domains.CreateRecordingOpts{
 		FromCamera: camId,
 		FileName:   fileName,
-		StartedAt:  time.Now(),
+		StartedAt:  startedTime,
 	})
 	if err != nil {
 		slog.Error("Failed to record file.", "cameraId", camId, "fileName", fileName, "err", err.Error())
@@ -118,5 +131,5 @@ func (hwd *HLSWatchDog) NewFileHandler(camId int, fileName string) {
 		startedAt:   recording.StartedAt,
 		recordingId: recording.RecordID,
 	}
-	slog.Info("New file recorded.", "cameraId", camId, "fileName", fileName)
+	slog.Info("New file recorded.", "cameraId", camId, "createdTime", startedTime)
 }

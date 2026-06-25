@@ -27,8 +27,8 @@ type CreateRecordingOpts struct {
 
 type GetRecordingForOpts struct {
 	FromCamera int64
-	StartedAt  time.Time
-	EndedAt    time.Time
+	QueryStart time.Time
+	QueryEnd   time.Time
 }
 
 type RecordingService interface {

@@ -12,6 +12,8 @@ import (
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
+var ErrVideoFileMissing = errors.New("Video segment missing.")
+
 // Refer to u2takey/ffmpeg-go showProgress.go example.
 type probeFormat struct {
 	Duration string `json:"duration"`
@@ -44,26 +46,26 @@ func probeSecs(filePath string) (time.Duration, error) {
 	return dur, nil
 }
 
-func getEndDate(fileName string, startedAt time.Time, id int) (*time.Time, error) {
+func getEndDate(fileName string, startedAt time.Time, id int) (time.Time, time.Duration, error) {
 	filePath := fmt.Sprintf("./recordings/%d/%s", id, fileName)
 	exist, err := recordingExist(filePath)
 	if err != nil {
-		return nil, err
+		return time.Time{}, 0, err
 	}
 
 	if !exist {
 		slog.Error("Failed to find file.", "filePath", filePath)
-		return nil, ErrVideoFileMissing
+		return time.Time{}, 0, ErrVideoFileMissing
 	}
 
 	secs, err := probeSecs(filePath)
 	if err != nil {
-		return nil, err
+		return time.Time{}, 0, err
 	}
 
 	etime := startedAt.Add(secs)
 	slog.Info("Etime", "etime", etime.Second())
-	return &etime, nil
+	return etime, secs, nil
 }
 
 func recordingExist(filePath string) (bool, error) {

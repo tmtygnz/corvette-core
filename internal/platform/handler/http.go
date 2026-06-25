@@ -1,6 +1,9 @@
 package handler
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/static"
+)
 
 type HttpServer struct {
 	fiberApp *fiber.App
@@ -8,6 +11,7 @@ type HttpServer struct {
 
 func NewHttpHandler() *HttpServer {
 	app := fiber.New()
+	app.Get("/recordings/*", static.New("./recordings"))
 	return &HttpServer{
 		fiberApp: app,
 	}
