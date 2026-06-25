@@ -47,13 +47,13 @@ func main() {
 	vendorsFromConfig := vendors.VendorMapperFromDb(cameraService)
 	streamers := streamer.StreamerMapper(vendorsFromConfig)
 
-	hlsWatchdog := playback.CreateVidSegmentWatchDog(recordingService)
+	vidSegWatchdog := playback.CreateVidSegmentWatchDog(recordingService)
 
-	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel, hlsWatchdog)
+	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel, vidSegWatchdog)
 	cameraRegistry.RegisterArrStreamers(streamers)
 	cameraRegistry.StartAllRegisteredCameras()
 
-	hlsWatchdog.Watch(coreCtx)
+	vidSegWatchdog.Watch(coreCtx)
 
 	httpHandler := handler.NewHttpHandler()
 	http_handlers.CreateCameraHttpHandler(httpHandler.App(), cameraService)

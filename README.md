@@ -8,7 +8,7 @@ A blazingly fast and robust Network Video Recorder (NVR) tailored for residentia
 
 - [x] Camera Streaming & Recording
 - [x] Camera AI Detection
-- [ ] HLS playlist for video playback
+- [ ] MP4 segments metadata for video playback
 - [ ] Livestreaming
 - [ ] Events Logging
 - [ ] Web UI Support

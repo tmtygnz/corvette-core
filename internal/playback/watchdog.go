@@ -57,7 +57,7 @@ func (hwd *VidSegmentWatchdog) watchRoutine(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("Context cancelled. Exiting HLS watchdog.")
+			slog.Info("Context cancelled. Exiting watchdog ended.")
 			return
 
 		case event, ok := <-hwd.watcher.Events:

@@ -21,7 +21,7 @@ func CreatePlaybackHttpHandler(app *fiber.App, rs domains.RecordingService) {
 		app: app,
 		rs:  rs,
 	}
-	app.Get("/playback/hls/today", handler.Today)
+	app.Get("/playback/mpegseg/today", handler.Today)
 }
 
 func (phh *PlaybackHttpHandler) Today(ctx fiber.Ctx) error {
