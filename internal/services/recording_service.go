@@ -5,6 +5,7 @@ import (
 	"corvette/internal/database"
 	"corvette/internal/domains"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"time"
 )
@@ -53,11 +54,12 @@ func (rs *RecordingService) SetEndAt(endTime time.Time, id int) (*domains.Record
 	return domains.RecordingFromSQLC(recording), nil
 }
 
-func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) (*[]domains.Recording, error) {
+func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) (*domains.SegmentMetadata, error) {
 	qStart := sql.NullTime{
 		Time:  opts.QueryStart,
 		Valid: true,
 	}
+
 	data, err := rs.db.GetRecordingFor(rs.ctx, database.GetRecordingForParams{
 		StartedAt:  opts.QueryEnd,
 		EndedAt:    qStart,
@@ -68,12 +70,44 @@ func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) (
 		return nil, err
 	}
 
-	var recordings []domains.Recording
-	for _, rawRecording := range data {
-		recordings = append(recordings, *domains.RecordingFromSQLC(rawRecording))
+	segments := orderBuilder(data)
+	segmentMetadata := domains.SegmentMetadata{
+		ForCamera: int(opts.FromCamera),
+		Segments:  segments,
 	}
+	return &segmentMetadata, nil
+}
 
-	return &recordings, nil
+func orderBuilder(recordingSegments []database.Recording) []domains.SegmentData {
+	var segmentDatas []domains.SegmentData
+
+	for i, currentSegment := range recordingSegments {
+		filePath := fmt.Sprintf("/recordings/%d/%s", currentSegment.FromCamera, currentSegment.FileName)
+		segment := domains.SegmentData{
+			SegmentStart: currentSegment.StartedAt,
+			SegmentEnd:   currentSegment.EndedAt.Time,
+			IsGap:        false,
+			Source:       filePath,
+		}
+
+		segmentDatas = append(segmentDatas, segment)
+
+		if i == len(recordingSegments)-1 {
+			continue
+		}
+
+		nextSegmentStartTime := recordingSegments[i+1].StartedAt
+		if !nextSegmentStartTime.After(segment.SegmentEnd) {
+			continue
+		}
+
+		segmentDatas = append(segmentDatas, domains.SegmentData{
+			SegmentStart: segment.SegmentEnd,
+			SegmentEnd:   nextSegmentStartTime,
+			IsGap:        true,
+		})
+	}
+	return segmentDatas
 }
 
 func (rs *RecordingService) ListRecordings() ([]*domains.Recording, error) {

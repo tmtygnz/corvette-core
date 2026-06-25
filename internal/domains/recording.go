@@ -31,10 +31,22 @@ type GetRecordingForOpts struct {
 	QueryEnd   time.Time
 }
 
+type SegmentData struct {
+	SegmentStart time.Time
+	SegmentEnd   time.Time
+	IsGap        bool
+	Source       string
+}
+
+type SegmentMetadata struct {
+	ForCamera int
+	Segments  []SegmentData
+}
+
 type RecordingService interface {
 	CreateRecording(opts *CreateRecordingOpts) (*Recording, error)
 	SetEndAt(endTime time.Time, id int) (*Recording, error)
-	GetRecordingFor(opts *GetRecordingForOpts) (*[]Recording, error)
+	GetRecordingFor(opts *GetRecordingForOpts) (*SegmentMetadata, error)
 	ListRecordings() ([]*Recording, error)
 	DeleteRecording(id int) error
 }
