@@ -2,8 +2,8 @@ package camera
 
 import (
 	"context"
-	"corvette/internal/hls"
 	"corvette/internal/object_detection"
+	"corvette/internal/playback"
 	"corvette/internal/streamer"
 	"log/slog"
 	"sync"
@@ -15,10 +15,10 @@ type CameraRegistry struct {
 	parentCtx      context.Context
 	wg             sync.WaitGroup
 	modelInstance  *object_detection.ObjectDetectionModelInstance
-	hlsWatchDog    *hls.HLSWatchDog
+	hlsWatchDog    *playback.VidSegmentWatchdog
 }
 
-func CreateCameraRegistry(ctx context.Context, modelInstance *object_detection.ObjectDetectionModelInstance, hlsWatchdog *hls.HLSWatchDog) *CameraRegistry {
+func CreateCameraRegistry(ctx context.Context, modelInstance *object_detection.ObjectDetectionModelInstance, hlsWatchdog *playback.VidSegmentWatchdog) *CameraRegistry {
 	return &CameraRegistry{
 		cameraHandlers: map[string]*CameraHandler{},
 		parentCtx:      ctx,
