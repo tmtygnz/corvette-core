@@ -2,14 +2,21 @@
 INSERT INTO recording (
     from_camera,
     file_name,
-    started_at
+    started_at,
+    status
 )
-VALUES (?, ?, ?)
+VALUES (?, ?, ?, ?)
 RETURNING *;
 
 -- name: SetEndTime :one
 UPDATE recording
 SET ended_at = ?
+WHERE record_id = ?
+RETURNING *;
+
+-- name: SetStatus :one
+UPDATE recording
+SET status = ?
 WHERE record_id = ?
 RETURNING *;
 

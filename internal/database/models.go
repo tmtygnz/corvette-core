@@ -25,4 +25,5 @@ type Recording struct {
 	FileName   string       `json:"file_name"`
 	StartedAt  time.Time    `json:"started_at"`
 	EndedAt    sql.NullTime `json:"ended_at"`
+	Status     string       `json:"status"`
 }

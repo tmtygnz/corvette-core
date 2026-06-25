@@ -21,6 +21,7 @@ type Querier interface {
 	ListOnlineCameras(ctx context.Context) ([]Camera, error)
 	ListRecordings(ctx context.Context) ([]Recording, error)
 	SetEndTime(ctx context.Context, arg SetEndTimeParams) (Recording, error)
+	SetStatus(ctx context.Context, arg SetStatusParams) (Recording, error)
 	UpdateCamera(ctx context.Context, arg UpdateCameraParams) (Camera, error)
 	UpdateCameraStatus(ctx context.Context, arg UpdateCameraStatusParams) (Camera, error)
 }
