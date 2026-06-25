@@ -105,6 +105,10 @@ func (hwd *VidSegmentWatchdog) HandleProbe(camId int, fileName string) {
 	hwd.rs.SetEndAt(endTime, recording.recordingId)
 	delete(hwd.ets, fileName)
 
+	if _, err := hwd.rs.SetStatus(domains.StatusDone, recording.recordingId); err != nil {
+		slog.Error("Failed to set recording status to DONE", "for", recording.recordingId)
+	}
+
 	slog.Info("New file updated.", "cameraId", camId, "endedAtTime", endTime)
 }
 
@@ -131,5 +135,10 @@ func (hwd *VidSegmentWatchdog) NewFileHandler(camId int, fileName string) {
 		startedAt:   recording.StartedAt,
 		recordingId: recording.RecordID,
 	}
+
+	if _, err := hwd.rs.SetStatus(domains.StatusRecording, recording.RecordID); err != nil {
+		slog.Error("Failed to set recording status to RECORDING", "for", recording.RecordID)
+	}
+
 	slog.Info("New file recorded.", "cameraId", camId, "createdTime", startedTime)
 }

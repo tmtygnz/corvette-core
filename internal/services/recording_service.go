@@ -54,6 +54,15 @@ func (rs *RecordingService) SetEndAt(endTime time.Time, id int) (*domains.Record
 	return domains.RecordingFromSQLC(recording), nil
 }
 
+func (rs *RecordingService) SetStatus(status domains.RecordingStatus, id int) (*domains.Recording, error) {
+	updated, err := rs.db.SetStatus(rs.ctx, database.SetStatusParams{RecordID: int64(id), Status: string(status)})
+	if err != nil {
+		return nil, err
+	}
+
+	return domains.RecordingFromSQLC(updated), nil
+}
+
 func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) (*domains.SegmentMetadata, error) {
 	qStart := sql.NullTime{
 		Time:  opts.QueryStart,

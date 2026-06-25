@@ -5,12 +5,20 @@ import (
 	"time"
 )
 
+type RecordingStatus string
+
+const (
+	StatusDone      = "done"
+	StatusRecording = "recording"
+)
+
 type Recording struct {
 	RecordID   int
 	FromCamera int
 	FileName   string
 	StartedAt  time.Time
 	EndedAt    *time.Time
+	Status     RecordingStatus
 }
 
 type CreateRecordingOpts struct {
@@ -46,6 +54,7 @@ type SegmentMetadata struct {
 type RecordingService interface {
 	CreateRecording(opts *CreateRecordingOpts) (*Recording, error)
 	SetEndAt(endTime time.Time, id int) (*Recording, error)
+	SetStatus(status RecordingStatus, id int) (*Recording, error)
 	GetRecordingFor(opts *GetRecordingForOpts) (*SegmentMetadata, error)
 	ListRecordings() ([]*Recording, error)
 	DeleteRecording(id int) error
