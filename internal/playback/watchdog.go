@@ -102,11 +102,15 @@ func (hwd *VidSegmentWatchdog) HandleProbe(camId int, fileName string) {
 	}
 
 	hwd.endTimeTracker[camId] = hwd.endTimeTracker[camId].Add(duration)
-	hwd.rs.SetEndAt(endTime, recording.recordingId)
+	if _, err := hwd.rs.SetEndAt(endTime, recording.recordingId); err != nil {
+		slog.Error("Failed to set end time.", "for", recording.recordingId)
+		return
+	}
 	delete(hwd.ets, fileName)
 
 	if _, err := hwd.rs.SetStatus(domains.StatusDone, recording.recordingId); err != nil {
 		slog.Error("Failed to set recording status to DONE", "for", recording.recordingId)
+		return
 	}
 
 	slog.Info("New file updated.", "cameraId", camId, "endedAtTime", endTime)

@@ -42,6 +42,9 @@ func main() {
 	cameraService := services.CreateCameraService(queries, coreCtx)
 	recordingService := services.CreateRecordingService(queries, coreCtx)
 
+	playbackCleanup := playback.CreatePlaybackCleanup(recordingService, cameraService)
+	playbackCleanup.CleanNils()
+
 	objectDetectionModel := object_detection.NewObjectDetectionModelInstance(config.OnnxDllPath, config.ObjDetectionModel)
 
 	vendorsFromConfig := vendors.VendorMapperFromDb(cameraService)
