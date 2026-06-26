@@ -56,6 +56,7 @@ type RecordingService interface {
 	SetEndAt(endTime time.Time, id int) (*Recording, error)
 	SetStatus(status RecordingStatus, id int) (*Recording, error)
 	GetRecordingFor(opts *GetRecordingForOpts) (*SegmentMetadata, error)
+	GetNilStatus(camId int) (*[]Recording, error)
 	ListRecordings() ([]*Recording, error)
 	DeleteRecording(id int) error
 }

@@ -28,6 +28,13 @@ WHERE from_camera = ?
   AND (ended_at IS NULL OR ended_at >= ?)
 ORDER BY started_at ASC;
 
+-- name: GetNilStatus :many
+SELECT *
+FROM recording
+WHERE from_camera = ?
+	AND ended_at IS NULL
+ORDER BY started_at ASC;
+
 -- name: ListRecordings :many
 SELECT *
 FROM recording

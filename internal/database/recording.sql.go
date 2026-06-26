@@ -58,6 +58,44 @@ func (q *Queries) DeleteRecording(ctx context.Context, recordID int64) error {
 	return err
 }
 
+const getNilStatus = `-- name: GetNilStatus :many
+SELECT record_id, from_camera, file_name, started_at, ended_at, status
+FROM recording
+WHERE from_camera = ?
+	AND ended_at IS NULL
+ORDER BY started_at ASC
+`
+
+func (q *Queries) GetNilStatus(ctx context.Context, fromCamera int64) ([]Recording, error) {
+	rows, err := q.db.QueryContext(ctx, getNilStatus, fromCamera)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Recording{}
+	for rows.Next() {
+		var i Recording
+		if err := rows.Scan(
+			&i.RecordID,
+			&i.FromCamera,
+			&i.FileName,
+			&i.StartedAt,
+			&i.EndedAt,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRecordingByID = `-- name: GetRecordingByID :one
 SELECT record_id, from_camera, file_name, started_at, ended_at, status
 FROM recording

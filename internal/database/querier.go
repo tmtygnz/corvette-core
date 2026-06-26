@@ -15,6 +15,7 @@ type Querier interface {
 	DeleteCamera(ctx context.Context, cameraID int64) error
 	DeleteRecording(ctx context.Context, recordID int64) error
 	GetCamera(ctx context.Context, cameraID int64) (Camera, error)
+	GetNilStatus(ctx context.Context, fromCamera int64) ([]Recording, error)
 	GetRecordingByID(ctx context.Context, recordID int64) (Recording, error)
 	GetRecordingFor(ctx context.Context, arg GetRecordingForParams) ([]Recording, error)
 	ListCameras(ctx context.Context) ([]Camera, error)

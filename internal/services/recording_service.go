@@ -87,6 +87,20 @@ func (rs *RecordingService) GetRecordingFor(opts *domains.GetRecordingForOpts) (
 	return &segmentMetadata, nil
 }
 
+func (rs *RecordingService) GetNilStatus(camId int) (*[]domains.Recording, error) {
+	data, err := rs.db.GetNilStatus(rs.ctx, int64(camId))
+	if err != nil {
+		return nil, err
+	}
+
+	var mappedRecordings []domains.Recording
+	for _, recording := range data {
+		mappedRecordings = append(mappedRecordings, *domains.RecordingFromSQLC(recording))
+	}
+
+	return &mappedRecordings, nil
+}
+
 func orderBuilder(recordingSegments []database.Recording) []domains.SegmentData {
 	var segmentDatas []domains.SegmentData
 
