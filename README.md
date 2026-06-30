@@ -4,6 +4,9 @@ A blazingly fast and robust Network Video Recorder (NVR) tailored for residentia
 
 ---
 
+### What's Next?
+Development may slow down as I return to classes, but the project is still active. I'll continue working on Corvette Core whenever time permits, focusing on stability, performance, and completing the remaining core features.
+
 ## Features
 
 - [x] Camera Streaming & Recording
