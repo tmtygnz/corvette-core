@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+const (
+	CameraStatusOnline     = "online"
+	CameraStatusRestarting = "reconnecting"
+	CameraStatusOffline    = "offline"
+)
+
 type Camera struct {
 	CameraId    int
 	CameraName  string

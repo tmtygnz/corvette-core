@@ -52,7 +52,7 @@ func main() {
 
 	vidSegWatchdog := playback.CreateVidSegmentWatchDog(recordingService)
 
-	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel, vidSegWatchdog)
+	cameraRegistry := camera.CreateCameraRegistry(coreCtx, objectDetectionModel, vidSegWatchdog, cameraService)
 	cameraRegistry.RegisterArrStreamers(streamers)
 	cameraRegistry.StartAllRegisteredCameras()
 

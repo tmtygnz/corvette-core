@@ -2,6 +2,7 @@ package camera
 
 import (
 	"context"
+	"corvette/internal/domains"
 	"corvette/internal/object_detection"
 	"corvette/internal/streamer"
 	"log/slog"
@@ -11,30 +12,28 @@ import (
 
 type OnlineStatus int
 
-const (
-	Online = iota
-	StartingUp
-	Offline
-)
-
 type CameraHandler struct {
-	streamer    streamer.Streamer
-	context     context.Context
-	status      OnlineStatus
-	objDetModel *object_detection.ObjectDetectionHandler
+	streamer      streamer.Streamer
+	context       context.Context
+	status        OnlineStatus
+	cameraService domains.CameraService
+	objDetModel   *object_detection.ObjectDetectionHandler
 }
 
-func CreateCameraHandler(streamer streamer.Streamer, ctx context.Context, objDet *object_detection.ObjectDetectionHandler) *CameraHandler {
+func CreateCameraHandler(streamer streamer.Streamer, ctx context.Context, objDet *object_detection.ObjectDetectionHandler, cameraService domains.CameraService) *CameraHandler {
 	return &CameraHandler{
-		streamer:    streamer,
-		context:     ctx,
-		status:      Offline,
-		objDetModel: objDet,
+		streamer:      streamer,
+		context:       ctx,
+		objDetModel:   objDet,
+		cameraService: cameraService,
 	}
 }
 
-func (ch *CameraHandler) StartAllFunctions() {
+func (ch *CameraHandler) StartAllFunctions() error {
 	g, ctx := errgroup.WithContext(ch.context)
+
+	ch.cameraService.UpdateCameraStatus(ch.streamer.Vendor().ID(), "online")
+	defer ch.cameraService.UpdateCameraStatus(ch.streamer.Vendor().ID(), "offline")
 
 	g.Go(func() error {
 		return ch.streamer.StartRecording(ctx)
@@ -45,12 +44,14 @@ func (ch *CameraHandler) StartAllFunctions() {
 	g.Go(func() error {
 		return ch.StartAIInference(ctx)
 	})
-	ch.status = Online
 
 	if err := g.Wait(); err != nil {
 		slog.Error("Camera function returned", "err", err.Error())
-		ch.status = Offline
+		ch.cameraService.UpdateCameraStatus(ch.streamer.Vendor().ID(), "offline")
+		return err
 	}
+
+	return nil
 }
 
 func (ch *CameraHandler) StartAIInference(ctx context.Context) error {
@@ -67,10 +68,6 @@ func (ch *CameraHandler) StartAIInference(ctx context.Context) error {
 			}
 		}
 	}
-}
-
-func (ch *CameraHandler) GetStatus() OnlineStatus {
-	return ch.status
 }
 
 func (ch *CameraHandler) CloseAll() {

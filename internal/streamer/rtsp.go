@@ -289,6 +289,7 @@ func (rs *RtspStreamer) prepareInput(frame []byte) []float32 {
 
 func (rs *RtspStreamer) StopAIStreaming() error {
 	rs.mu.Lock()
+	defer rs.mu.Unlock()
 
 	if rs.aiCmd == nil || rs.aiCmd.Process == nil {
 		return nil

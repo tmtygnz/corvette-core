@@ -149,5 +149,5 @@ func (rs *RecordingService) ListRecordings() ([]*domains.Recording, error) {
 }
 
 func (rs *RecordingService) DeleteRecording(id int) error {
-	return rs.db.DeleteCamera(rs.ctx, int64(id))
+	return rs.db.DeleteRecording(rs.ctx, int64(id))
 }
